@@ -1,0 +1,39 @@
+======================
+ Smart Contract Deployment
+======================
+
+Contract Name: Leaderboard
+Deployed Network: (Ethereum-compatible)
+
+--------------------------------------
+Deployment Details
+--------------------------------------
+Transaction Status : SUCCESS
+Block Number       : 762925
+Block Hash         : 0x5c5c960c13e1508bb7d26a2c67c107ea34e5022bef3fc36816474f20dbbb1e44
+Transaction Hash   : 0x88fb6b53a170f11f318cc5d4b7342a86b8b1af9630175fbcfb73216887efc56f
+
+--------------------------------------
+Contract Details
+--------------------------------------
+Deployer Address   : 0x53128Ae3c345eFdF14b2184b0d8057F965568323
+Contract Address   : 0xa7b2d99e410ad670872c0fafd3f01366ae54e87b
+Constructor Args   : {}
+
+--------------------------------------
+Gas Information
+--------------------------------------
+Gas Used           : 886,731
+Transaction Cost   : 878,591 gas
+
+--------------------------------------
+Logs
+--------------------------------------
+No event logs emitted during deployment.
+
+--------------------------------------
+Next Steps
+--------------------------------------
+- Use this Contract Address in your frontend/web3 integration.
+- Load the ABI (from Remix compile output) for interaction.
+

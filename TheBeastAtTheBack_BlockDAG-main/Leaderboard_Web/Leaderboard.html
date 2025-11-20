@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BDAG Leaderboard</title>
+
+  <!-- ✅ Load local ethers.js (no CSP issues) -->
+  <script src="ethers.min.js"></script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #FFD700;
+      text-shadow: 2px 2px 8px #ff0000;
+      margin-top: 30px;
+    }
+    button {
+      background: #ff0000;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      margin: 10px;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #ff0000;
+    }
+    button:hover {
+      background: #FFD700;
+      color: black;
+      box-shadow: 0 0 15px #FFD700;
+    }
+    #wallet {
+      margin: 20px;
+      font-size: 18px;
+      color: #00ffff;
+    }
+    #leaderboard {
+      margin: 30px auto;
+      max-width: 500px;
+      background: rgba(0,0,0,0.4);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #004e92;
+    }
+    #leaderboard h2 {
+      color: #00ffff;
+    }
+    .entry {
+      background: rgba(255,255,255,0.05);
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #FFD700;
+    }
+    input {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      width: 200px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 BDAG Game Leaderboard 🏆</h1>
+
+  <!-- ✅ Wallet connect -->
+  <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  <p id="wallet">Not Connected</p>
+
+  <!-- ✅ Username input -->
+  <input type="text" id="username" placeholder="Enter username" />
+
+  <!-- ✅ Submit & View -->
+  <button onclick="submitScore()">✅ Submit Score</button>
+  <button onclick="loadLeaderboard()">📜 View Leaderboard</button>
+
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <p>No scores yet...</p>
+  </div>
+
+<script>
+  // ✅ Your deployed contract
+  const contractAddress = "0x7b41e89fd20bec81adbaad81c7e0ee2bd409f402";
+  const contractABI = [
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "player", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "score", "type": "uint256" },
+        { "indexed": false, "internalType": "string", "name": "username", "type": "string" }
+      ],
+      "name": "ScoreSubmitted",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "_score", "type": "uint256" },
+        { "internalType": "string", "name": "_username", "type": "string" }
+      ],
+      "name": "submitScore",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPlayerCount",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
+      ],
+      "name": "getPlayerAt",
+      "outputs": [
+        { "internalType": "address", "name": "", "type": "address" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "string", "name": "", "type": "string" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];
+
+  let provider, signer, contract, currentAccount;
+
+  // ✅ Connect MetaMask
+  async function connectWallet() {
+    console.log("🖱 Connect button clicked.");
+
+    if (!window.ethereum) {
+      alert("Install MetaMask!");
+      return;
+    }
+
+    try {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      currentAccount = await signer.getAddress();
+
+      document.getElementById("wallet").innerText =
+        "✅ Connected: " + currentAccount;
+
+      contract = new ethers.Contract(contractAddress, contractABI, signer);
+      console.log("✅ MetaMask connected:", currentAccount);
+    } catch (err) {
+      console.error("❌ MetaMask connection failed:", err);
+      alert("MetaMask connection failed!");
+    }
+  }
+
+  // ✅ Get score from URL param (Unity sends ?score=123)
+  function getGameScoreFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return parseInt(params.get("score") || "0");
+  }
+
+  // ✅ Submit score
+  async function submitScore() {
+    if (!contract) return alert("Connect wallet first!");
+    const username = document.getElementById("username").value.trim();
+    if (!username) return alert("Enter a username!");
+
+    const score = getGameScoreFromURL(); // Unity auto passes this
+    if (score <= 0) return alert("No valid game score!");
+
+    console.log(`Submitting score ${score} for username ${username}`);
+
+    try {
+      const tx = await contract.submitScore(score, username);
+      alert("✅ Submitted! Tx Hash: " + tx.hash);
+    } catch (err) {
+      console.error("❌ Submit failed:", err);
+      alert("Submit failed!");
+    }
+  }
+
+  // ✅ Load leaderboard
+  async function loadLeaderboard() {
+    if (!contract) return alert("Connect wallet first!");
+
+    const count = await contract.getPlayerCount();
+    let html = "<h2>Leaderboard</h2>";
+
+    let scores = [];
+    for (let i = 0; i < count; i++) {
+      const [addr, score, name] = await contract.getPlayerAt(i);
+      scores.push({ addr, score: parseInt(score), name });
+    }
+
+    // Sort descending by score
+    scores.sort((a, b) => b.score - a.score);
+
+    scores.forEach((entry, idx) => {
+      const rank = idx + 1;
+      html += `<div class="entry">#${rank} | ${entry.name} (${entry.addr.slice(
+        0,
+        6
+      )}...) - <b>${entry.score}</b></div>`;
+    });
+
+    document.getElementById("leaderboard").innerHTML = html;
+  }
+</script>
+</body>
+</html>
